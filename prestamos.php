@@ -212,37 +212,39 @@ if ($result->num_rows > 0) {
     
     <!-- Modales para ver detalles de los préstamos -->
     <?php foreach ($prestamos as $prestamo): ?>
-    <div class="modal fade" id="modalDetalles<?php echo $prestamo['id']; ?>" tabindex="-1" aria-labelledby="modalDetallesLabel<?php echo $prestamo['id']; ?>" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalDetallesLabel<?php echo $prestamo['id']; ?>">Detalles del Préstamo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Cantidad Solicitada:</strong> $<?php echo number_format($prestamo['cantidad'], 2); ?></p>
-                    <p><strong>Motivo:</strong> <?php echo $prestamo['motivo']; ?></p>
-                    <p><strong>Fecha de Solicitud:</strong> <?php echo date('d/m/Y H:i', strtotime($prestamo['fecha_solicitud'])); ?></p>
-                    <p><strong>Estado:</strong> 
-                        <span class="badge <?php echo $badge_class; ?>">
-                            <?php echo ucfirst($prestamo['estado']); ?>
-                        </span>
-                    </p>
-                    
-                    <?php if ($prestamo['comentarios']): ?>
-                    <p><strong>Comentarios de RH:</strong> <?php echo $prestamo['comentarios']; ?></p>
-                    <?php endif; ?>
-                    
-                    <?php if ($prestamo['fecha_revision']): ?>
-                    <p><strong>Fecha de Revisión:</strong> <?php echo date('d/m/Y H:i', strtotime($prestamo['fecha_revision'])); ?></p>
-                    <?php endif; ?>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
+    <!-- Updated Modal for prestamos.php -->
+<div class="modal fade" id="modalDetalles<?php echo $prestamo['id']; ?>" tabindex="-1" aria-labelledby="modalDetallesLabel<?php echo $prestamo['id']; ?>" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetallesLabel<?php echo $prestamo['id']; ?>">Detalles del Préstamo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Número de Ficha:</strong> <?php echo $prestamo['num_ficha']; ?></p>
+                <p><strong>Cantidad Solicitada:</strong> $<?php echo number_format($prestamo['cantidad'], 2); ?></p>
+                <p><strong>Motivo:</strong> <?php echo $prestamo['motivo']; ?></p>
+                <p><strong>Fecha de Solicitud:</strong> <?php echo date('d/m/Y H:i', strtotime($prestamo['fecha_solicitud'])); ?></p>
+                <p><strong>Estado:</strong> 
+                    <span class="badge <?php echo $badge_class; ?>">
+                        <?php echo ucfirst($prestamo['estado']); ?>
+                    </span>
+                </p>
+                
+                <?php if ($prestamo['comentarios']): ?>
+                <p><strong>Comentarios de RH:</strong> <?php echo $prestamo['comentarios']; ?></p>
+                <?php endif; ?>
+                
+                <?php if ($prestamo['fecha_revision']): ?>
+                <p><strong>Fecha de Revisión:</strong> <?php echo date('d/m/Y H:i', strtotime($prestamo['fecha_revision'])); ?></p>
+                <?php endif; ?>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
+</div>
     <?php endforeach; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

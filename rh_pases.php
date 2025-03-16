@@ -202,6 +202,8 @@ if ($result->num_rows > 0) {
                 <div class="modal-body">
                     <p><strong>Empleado:</strong> <?php echo $pase['nombre']; ?></p>
                     <p><strong>Puesto:</strong> <?php echo $pase['puesto']; ?></p>
+                    <p><strong>Ficha:</strong> <?php echo $pase['num_ficha']; ?></p>
+
                     <p><strong>Tipo de Pase:</strong> 
                         <?php 
                         switch ($pase['tipo_pase']) {
@@ -257,6 +259,8 @@ if ($result->num_rows > 0) {
                 <div class="modal-body">
                     <p><strong>Empleado:</strong> <?php echo $pase['nombre']; ?></p>
                     <p><strong>Puesto:</strong> <?php echo $pase['puesto']; ?></p>
+                    <p><strong>Ficha:</strong> <?php echo $pase['num_ficha']; ?></p>
+
                     <p><strong>Tipo de Pase:</strong> 
                         <?php 
                         switch ($pase['tipo_pase']) {
@@ -324,5 +328,89 @@ if ($result->num_rows > 0) {
     <?php endforeach; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Modal de Confirmación para incluir en todas las páginas que requieren aprobación/rechazo -->
+<div class="modal fade" id="confirmacionModal" tabindex="-1" aria-labelledby="confirmacionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmacionModalLabel">Confirmar Acción</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmacionMensaje">¿Está seguro que desea realizar esta acción?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="confirmarAccionBtn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script para manejar los eventos de confirmación -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Variables para almacenar el formulario y la acción a realizar
+    let formActual = null;
+    let accionActual = null;
+    
+    // Capturar todos los botones de aprobar y rechazar
+    const botonesAprobar = document.querySelectorAll('button[name="accion"][value="aprobar"]');
+    const botonesRechazar = document.querySelectorAll('button[name="accion"][value="rechazar"]');
+    
+    // Configurar la confirmación para los botones de aprobar
+    botonesAprobar.forEach(boton => {
+      boton.addEventListener('click', function(e) {
+        e.preventDefault();
+        formActual = this.closest('form');
+        accionActual = 'aprobar';
+        
+        // Actualizar el mensaje de confirmación
+        document.getElementById('confirmacionMensaje').textContent = '¿Está seguro que desea APROBAR esta solicitud?';
+        
+        // Mostrar el modal de confirmación
+        const modal = new bootstrap.Modal(document.getElementById('confirmacionModal'));
+        modal.show();
+      });
+    });
+    
+    // Configurar la confirmación para los botones de rechazar
+    botonesRechazar.forEach(boton => {
+      boton.addEventListener('click', function(e) {
+        e.preventDefault();
+        formActual = this.closest('form');
+        accionActual = 'rechazar';
+        
+        // Actualizar el mensaje de confirmación
+        document.getElementById('confirmacionMensaje').textContent = '¿Está seguro que desea RECHAZAR esta solicitud?';
+        
+        // Mostrar el modal de confirmación
+        const modal = new bootstrap.Modal(document.getElementById('confirmacionModal'));
+        modal.show();
+      });
+    });
+    
+    // Configurar el botón de confirmar en el modal
+    document.getElementById('confirmarAccionBtn').addEventListener('click', function() {
+      if (formActual && accionActual) {
+        // Crear un input oculto para enviar la acción
+        const inputAccion = document.createElement('input');
+        inputAccion.type = 'hidden';
+        inputAccion.name = 'accion';
+        inputAccion.value = accionActual;
+        
+        // Añadir el input al formulario
+        formActual.appendChild(inputAccion);
+        
+        // Enviar el formulario
+        formActual.submit();
+      }
+      
+      // Cerrar el modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('confirmacionModal'));
+      modal.hide();
+    });
+  });
+</script>
 </body>
 </html>

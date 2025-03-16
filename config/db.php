@@ -1,7 +1,7 @@
 <?php
 $host = 'localhost';
 $username = 'root';
-$password = '1234';
+$password = '';
 $database = 'gestor_rh';
 
 // Conexión a la base de datos

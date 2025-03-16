@@ -49,10 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     $email = trim($_POST['email']);
-    $tipo_usuario = trim($_POST['tipo_usuario']);
+    // Por defecto asignar el rol "empleado"
+    $tipo_usuario = 'empleado';
     
     // Validaciones básicas
-    if (empty($num_ficha) || empty($username) || empty($password) || empty($confirm_password) || empty($tipo_usuario)) {
+    if (empty($num_ficha) || empty($username) || empty($password) || empty($confirm_password)) {
         $error = 'Por favor, complete todos los campos obligatorios.';
     } else if ($password != $confirm_password) {
         $error = 'Las contraseñas no coinciden.';
@@ -224,18 +225,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <label for="email" class="form-label">Correo Electrónico</label>
                         <input type="email" class="form-control" id="email" name="email">
                         <div class="form-text">Opcional, pero recomendado para recuperación de contraseña.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="tipo_usuario" class="form-label">Tipo de Usuario *</label>
-                        <select class="form-select" id="tipo_usuario" name="tipo_usuario" required>
-                            <option value="">Seleccione...</option>
-                            <option value="empleado">Empleado</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="rh">Recursos Humanos</option>
-                            <option value="revisor">Revisor</option>
-                            <option value="seguridad">Seguridad</option>
-                        </select>
                     </div>
                     
                     <div class="d-grid gap-2">

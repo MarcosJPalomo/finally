@@ -251,59 +251,61 @@ if ($result->num_rows > 0) {
     
     <!-- Modales para ver detalles de las solicitudes -->
     <?php foreach ($bajas as $baja): ?>
-    <div class="modal fade" id="modalDetalles<?php echo $baja['id']; ?>" tabindex="-1" aria-labelledby="modalDetallesLabel<?php echo $baja['id']; ?>" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalDetallesLabel<?php echo $baja['id']; ?>">Detalles de la Solicitud de Baja</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Empleado:</strong> <?php echo $baja['nombre']; ?></p>
-                    <p><strong>Puesto:</strong> <?php echo $baja['puesto']; ?></p>
-                    <p><strong>Motivo:</strong> <?php echo $baja['motivo']; ?></p>
-                    <p><strong>Fecha de Solicitud:</strong> <?php echo date('d/m/Y H:i', strtotime($baja['fecha_solicitud'])); ?></p>
-                    
-                    <div class="card mt-3 mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Estado Revisor</h6>
-                        </div>
-                        <div class="card-body">
-                            <p>
-                                <span class="badge <?php echo $badge_class_revisor; ?>">
-                                    <?php echo ucfirst($baja['estado_revisor']); ?>
-                                </span>
-                            </p>
-                            <?php if ($baja['estado_revisor'] != 'pendiente' && $baja['fecha_revision_revisor']): ?>
-                            <p><strong>Comentarios:</strong> <?php echo $baja['comentarios_revisor'] ? $baja['comentarios_revisor'] : 'Sin comentarios'; ?></p>
-                            <p><strong>Fecha de Revisión:</strong> <?php echo date('d/m/Y H:i', strtotime($baja['fecha_revision_revisor'])); ?></p>
-                            <?php endif; ?>
-                        </div>
+    <!-- Updated Modal for bajas.php -->
+<div class="modal fade" id="modalDetalles<?php echo $baja['id']; ?>" tabindex="-1" aria-labelledby="modalDetallesLabel<?php echo $baja['id']; ?>" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetallesLabel<?php echo $baja['id']; ?>">Detalles de la Solicitud de Baja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Empleado:</strong> <?php echo $baja['nombre']; ?></p>
+                <p><strong>Puesto:</strong> <?php echo $baja['puesto']; ?></p>
+                <p><strong>Número de Ficha:</strong> <?php echo $baja['num_ficha']; ?></p>
+                <p><strong>Motivo:</strong> <?php echo $baja['motivo']; ?></p>
+                <p><strong>Fecha de Solicitud:</strong> <?php echo date('d/m/Y H:i', strtotime($baja['fecha_solicitud'])); ?></p>
+                
+                <div class="card mt-3 mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Estado Revisor</h6>
                     </div>
-                    
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Estado RH</h6>
-                        </div>
-                        <div class="card-body">
-                            <p>
-                                <span class="badge <?php echo $badge_class_rh; ?>">
-                                    <?php echo ucfirst($baja['estado_rh']); ?>
-                                </span>
-                            </p>
-                            <?php if ($baja['estado_rh'] != 'pendiente' && $baja['fecha_revision_rh']): ?>
-                            <p><strong>Comentarios:</strong> <?php echo $baja['comentarios_rh'] ? $baja['comentarios_rh'] : 'Sin comentarios'; ?></p>
-                            <p><strong>Fecha de Revisión:</strong> <?php echo date('d/m/Y H:i', strtotime($baja['fecha_revision_rh'])); ?></p>
-                            <?php endif; ?>
-                        </div>
+                    <div class="card-body">
+                        <p>
+                            <span class="badge <?php echo $badge_class_revisor; ?>">
+                                <?php echo ucfirst($baja['estado_revisor']); ?>
+                            </span>
+                        </p>
+                        <?php if ($baja['estado_revisor'] != 'pendiente' && $baja['fecha_revision_revisor']): ?>
+                        <p><strong>Comentarios:</strong> <?php echo $baja['comentarios_revisor'] ? $baja['comentarios_revisor'] : 'Sin comentarios'; ?></p>
+                        <p><strong>Fecha de Revisión:</strong> <?php echo date('d/m/Y H:i', strtotime($baja['fecha_revision_revisor'])); ?></p>
+                        <?php endif; ?>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Estado RH</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <span class="badge <?php echo $badge_class_rh; ?>">
+                                <?php echo ucfirst($baja['estado_rh']); ?>
+                            </span>
+                        </p>
+                        <?php if ($baja['estado_rh'] != 'pendiente' && $baja['fecha_revision_rh']): ?>
+                        <p><strong>Comentarios:</strong> <?php echo $baja['comentarios_rh'] ? $baja['comentarios_rh'] : 'Sin comentarios'; ?></p>
+                        <p><strong>Fecha de Revisión:</strong> <?php echo date('d/m/Y H:i', strtotime($baja['fecha_revision_rh'])); ?></p>
+                        <?php endif; ?>
+                    </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
+</div>
     <?php endforeach; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

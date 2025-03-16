@@ -122,6 +122,8 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
                         <p><strong>ID de Solicitud:</strong> <?php echo $solicitud['id']; ?></p>
                         <p><strong>Empleado:</strong> <?php echo $solicitud['nombre']; ?></p>
                         <p><strong>Puesto:</strong> <?php echo $solicitud['puesto']; ?></p>
+                        <p><strong>Ficha:</strong> <?php echo $solicitud['num_ficha']; ?></p>
+
                         <p><strong>Supervisor:</strong> <?php echo $solicitud['supervisor_nombre']; ?></p>
                     </div>
                     <div class="col-md-6">

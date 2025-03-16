@@ -148,11 +148,21 @@ if ($result->num_rows > 0) {
                             </div>
                             <div class="mb-3">
                                 <label for="turno_actual" class="form-label">Turno Actual</label>
-                                <input type="text" class="form-control" id="turno_actual" name="turno_actual" required>
+                                <select class="form-select" id="turno_actual" name="turno_actual" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="Mañana">Mañana</option>
+                                    <option value="Tarde">Tarde</option>
+                                    <option value="Tiempo Completo">Tiempo Completo</option>
+                                </select>
                             </div>
                             <div class="mb-3">
                                 <label for="turno_nuevo" class="form-label">Turno Nuevo</label>
-                                <input type="text" class="form-control" id="turno_nuevo" name="turno_nuevo" required>
+                                <select class="form-select" id="turno_nuevo" name="turno_nuevo" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="Mañana">Mañana</option>
+                                    <option value="Tarde">Tarde</option>
+                                    <option value="Tiempo Completo">Tiempo Completo</option>
+                                </select>
                             </div>
                             <div class="mb-3">
                                 <label for="fecha_cambio" class="form-label">Fecha de Cambio</label>
@@ -270,6 +280,26 @@ if ($result->num_rows > 0) {
                 };
                 
                 xhr.send();
+            });
+            
+            // Evitar seleccionar el mismo turno
+            document.getElementById('turno_nuevo').addEventListener('change', function() {
+                const turnoActual = document.getElementById('turno_actual').value;
+                const turnoNuevo = this.value;
+                
+                if (turnoActual === turnoNuevo && turnoActual !== '') {
+                    alert('El turno nuevo no puede ser igual al turno actual.');
+                    this.value = '';
+                }
+            });
+            
+            document.getElementById('turno_actual').addEventListener('change', function() {
+                const turnoNuevo = document.getElementById('turno_nuevo').value;
+                const turnoActual = this.value;
+                
+                if (turnoActual === turnoNuevo && turnoNuevo !== '') {
+                    document.getElementById('turno_nuevo').value = '';
+                }
             });
         });
     </script>

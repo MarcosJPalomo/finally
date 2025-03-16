@@ -111,9 +111,124 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Detalles de Solicitud de Tiempo Extra</h1>
+            <h1>Detalles de Tiempo Extra</h1>
             <?php if ($tipo_usuario == 'supervisor'): ?>
             <a href="tiempo_extra.php" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Volver
             </a>
             <?php elseif ($tipo_usuario == 'revisor'): ?>
+            <a href="revisor_tiempo_extra.php" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+            <?php elseif ($tipo_usuario == 'rh'): ?>
+            <a href="rh_tiempo_extra.php" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+            <?php endif; ?>
+        </div>
+        
+        <?php if (!empty($error)): ?>
+        <div class="alert alert-danger">
+            <?php echo $error; ?>
+        </div>
+        <?php elseif ($solicitud): ?>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Información de la Solicitud</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>ID de Solicitud:</strong> <?php echo $solicitud['id']; ?></p>
+                        <p><strong>Supervisor:</strong> <?php echo $solicitud['supervisor_nombre']; ?></p>
+                        <p><strong>Número de Ficha:</strong> <?php echo $solicitud['num_ficha']; ?></p>
+                        <p><strong>Semana que inicia el:</strong> <?php echo date('d/m/Y', strtotime($solicitud['semana_inicio'])); ?></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Horas Extra:</strong> <?php echo $solicitud['horas_extra']; ?></p>
+                        <p><strong>Fecha de Solicitud:</strong> <?php echo date('d/m/Y H:i', strtotime($solicitud['fecha_solicitud'])); ?></p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <p><strong>Motivo:</strong></p>
+                    <div class="card">
+                        <div class="card-body bg-light">
+                            <?php echo nl2br($solicitud['motivo']); ?>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Estado de la Solicitud</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Revisor</h6>
+                                <?php 
+                                $badge_class_revisor = '';
+                                switch ($solicitud['estado_revisor']) {
+                                    case 'pendiente':
+                                        $badge_class_revisor = 'bg-warning';
+                                        break;
+                                    case 'aprobada':
+                                        $badge_class_revisor = 'bg-success';
+                                        break;
+                                    case 'rechazada':
+                                        $badge_class_revisor = 'bg-danger';
+                                        break;
+                                }
+                                ?>
+                                <p><strong>Estado:</strong>
+                                    <span class="badge <?php echo $badge_class_revisor; ?>">
+                                        <?php echo ucfirst($solicitud['estado_revisor']); ?>
+                                    </span>
+                                </p>
+                                
+                                <?php if ($solicitud['estado_revisor'] != 'pendiente' && $solicitud['fecha_revision_revisor']): ?>
+                                <p><strong>Revisor:</strong> <?php echo $solicitud['revisor_nombre'] ? $solicitud['revisor_nombre'] : 'No disponible'; ?></p>
+                                <p><strong>Comentarios:</strong> <?php echo $solicitud['comentarios_revisor'] ? nl2br($solicitud['comentarios_revisor']) : 'Sin comentarios'; ?></p>
+                                <p><strong>Fecha de Revisión:</strong> <?php echo date('d/m/Y H:i', strtotime($solicitud['fecha_revision_revisor'])); ?></p>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6>Recursos Humanos</h6>
+                                <?php 
+                                $badge_class_rh = '';
+                                switch ($solicitud['estado_rh']) {
+                                    case 'pendiente':
+                                        $badge_class_rh = 'bg-warning';
+                                        break;
+                                    case 'procesada':
+                                        $badge_class_rh = 'bg-success';
+                                        break;
+                                }
+                                ?>
+                                <p><strong>Estado:</strong>
+                                    <span class="badge <?php echo $badge_class_rh; ?>">
+                                        <?php echo ucfirst($solicitud['estado_rh']); ?>
+                                    </span>
+                                </p>
+                                
+                                <?php if ($solicitud['estado_rh'] != 'pendiente' && $solicitud['fecha_revision_rh']): ?>
+                                <p><strong>Responsable RH:</strong> <?php echo $solicitud['rh_nombre'] ? $solicitud['rh_nombre'] : 'No disponible'; ?></p>
+                                <p><strong>Comentarios:</strong> <?php echo $solicitud['comentarios_rh'] ? nl2br($solicitud['comentarios_rh']) : 'Sin comentarios'; ?></p>
+                                <p><strong>Fecha de Procesamiento:</strong> <?php echo date('d/m/Y H:i', strtotime($solicitud['fecha_revision_rh'])); ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <?php endif; ?>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

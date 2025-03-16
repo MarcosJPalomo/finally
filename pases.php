@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['tipo_usuario'] != 'empleado' && 
 $error = '';
 $success = '';
 $user_id = $_SESSION['user_id'];
+$tipo_usuario = $_SESSION['tipo_usuario'];
 
 // Obtener información del usuario
 $query = "SELECT u.*, e.nombre, e.puesto FROM usuarios u 
@@ -28,52 +29,91 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tipo_pase = $_POST['tipo_pase'];
     $fecha_pase = $_POST['fecha_pase'];
     $hora_salida = isset($_POST['hora_salida']) ? $_POST['hora_salida'] : null;
+    $hora_entrada = isset($_POST['hora_entrada']) ? $_POST['hora_entrada'] : null;
     $hora_regreso = isset($_POST['hora_regreso']) ? $_POST['hora_regreso'] : null;
     $motivo = trim($_POST['motivo']);
+    
+    // Si es supervisor y está solicitando para otro empleado, obtener el número de ficha
+    if ($tipo_usuario == 'supervisor' && isset($_POST['num_ficha_empleado']) && !empty($_POST['num_ficha_empleado'])) {
+        $num_ficha = trim($_POST['num_ficha_empleado']);
+    }
     
     // Validaciones básicas
     if (empty($tipo_pase) || empty($fecha_pase) || empty($motivo)) {
         $error = 'Por favor, complete todos los campos obligatorios.';
-    } else if (($tipo_pase == 'salida' || $tipo_pase == 'entrada_salida') && empty($hora_salida)) {
-        $error = 'La hora de salida es obligatoria para este tipo de pase.';
-    } else if (($tipo_pase == 'entrada' || $tipo_pase == 'entrada_salida') && empty($hora_regreso)) {
-        $error = 'La hora de regreso es obligatoria para este tipo de pase.';
+    } else if ($tipo_pase == 'salida' && empty($hora_salida)) {
+        $error = 'La hora de salida es obligatoria para pases de salida.';
+    } else if ($tipo_pase == 'entrada' && empty($hora_entrada)) {
+        $error = 'La hora de entrada es obligatoria para pases de entrada.';
+    } else if ($tipo_pase == 'entrada_salida' && (empty($hora_salida) || empty($hora_regreso))) {
+        $error = 'Las horas de salida y regreso son obligatorias para pases de entrada/salida.';
     } else if ($tipo_pase == 'entrada_salida' && $hora_salida >= $hora_regreso) {
         $error = 'La hora de salida debe ser anterior a la hora de regreso.';
     } else {
-        // Insertar la solicitud de pase
-        $insert_query = "INSERT INTO pases_entrada_salida (num_ficha, tipo_pase, fecha_pase, hora_salida, hora_regreso, motivo) 
-                       VALUES (?, ?, ?, ?, ?, ?)";
-        $insert_stmt = $conn->prepare($insert_query);
-        $insert_stmt->bind_param("ssssss", $num_ficha, $tipo_pase, $fecha_pase, $hora_salida, $hora_regreso, $motivo);
+        // Verificar que el empleado exista (en caso de supervisor)
+        if ($tipo_usuario == 'supervisor' && isset($_POST['num_ficha_empleado'])) {
+            $check_query = "SELECT * FROM empleados WHERE num_ficha = ?";
+            $check_stmt = $conn->prepare($check_query);
+            $check_stmt->bind_param("s", $num_ficha);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            
+            if ($check_result->num_rows == 0) {
+                $error = 'El número de ficha no existe en el sistema.';
+            }
+        }
         
-        if ($insert_stmt->execute()) {
-            $success = 'Solicitud de pase registrada correctamente.';
+        if (empty($error)) {
+            // Para pase de entrada, usamos la hora_entrada como hora_regreso
+            if ($tipo_pase == 'entrada') {
+                $hora_regreso = $hora_entrada;
+            }
             
-            // Registrar la actividad
-            $accion = "Solicitud de pase " . $tipo_pase;
-            $tabla = "pases_entrada_salida";
-            $registro_id = $conn->insert_id;
-            $detalles = "Tipo: $tipo_pase, Fecha: $fecha_pase";
-            $ip = $_SERVER['REMOTE_ADDR'];
+            // Insertar la solicitud de pase
+            $insert_query = "INSERT INTO pases_entrada_salida (num_ficha, tipo_pase, fecha_pase, hora_salida, hora_regreso, motivo) 
+                           VALUES (?, ?, ?, ?, ?, ?)";
+            $insert_stmt = $conn->prepare($insert_query);
+            $insert_stmt->bind_param("ssssss", $num_ficha, $tipo_pase, $fecha_pase, $hora_salida, $hora_regreso, $motivo);
             
-            $log_query = "INSERT INTO logs_sistema (usuario_id, accion, tabla_afectada, registro_id, detalles, ip_usuario) 
-                         VALUES (?, ?, ?, ?, ?, ?)";
-            $log_stmt = $conn->prepare($log_query);
-            $log_stmt->bind_param("ississ", $user_id, $accion, $tabla, $registro_id, $detalles, $ip);
-            $log_stmt->execute();
-        } else {
-            $error = 'Error al registrar la solicitud: ' . $conn->error;
+            if ($insert_stmt->execute()) {
+                $success = 'Solicitud de pase registrada correctamente.';
+                
+                // Registrar la actividad
+                $accion = "Solicitud de pase " . $tipo_pase;
+                $tabla = "pases_entrada_salida";
+                $registro_id = $conn->insert_id;
+                $detalles = "Tipo: $tipo_pase, Fecha: $fecha_pase, Ficha: $num_ficha";
+                $ip = $_SERVER['REMOTE_ADDR'];
+                
+                $log_query = "INSERT INTO logs_sistema (usuario_id, accion, tabla_afectada, registro_id, detalles, ip_usuario) 
+                             VALUES (?, ?, ?, ?, ?, ?)";
+                $log_stmt = $conn->prepare($log_query);
+                $log_stmt->bind_param("ississ", $user_id, $accion, $tabla, $registro_id, $detalles, $ip);
+                $log_stmt->execute();
+            } else {
+                $error = 'Error al registrar la solicitud: ' . $conn->error;
+            }
         }
     }
 }
 
-// Obtener lista de pases del empleado
-$query = "SELECT * FROM pases_entrada_salida 
-          WHERE num_ficha = ? 
-          ORDER BY fecha_solicitud DESC";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("s", $num_ficha);
+// Obtener lista de pases del empleado o de los empleados (si es supervisor)
+if ($tipo_usuario == 'supervisor') {
+    $query = "SELECT p.*, e.nombre, e.puesto 
+              FROM pases_entrada_salida p
+              JOIN empleados e ON p.num_ficha = e.num_ficha
+              ORDER BY p.fecha_solicitud DESC";
+    $stmt = $conn->prepare($query);
+} else {
+    $query = "SELECT p.*, e.nombre, e.puesto 
+              FROM pases_entrada_salida p
+              JOIN empleados e ON p.num_ficha = e.num_ficha
+              WHERE p.num_ficha = ?
+              ORDER BY p.fecha_solicitud DESC";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("s", $num_ficha);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 $pases = [];
@@ -138,6 +178,24 @@ if ($result->num_rows > 0) {
                     </div>
                     <div class="card-body">
                         <form method="post" action="pases.php" id="formPase">
+                            <?php if ($tipo_usuario == 'supervisor'): ?>
+                            <div class="mb-3">
+                                <label for="num_ficha_empleado" class="form-label">Número de Ficha del Empleado</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="num_ficha_empleado" name="num_ficha_empleado" placeholder="Dejar vacío para solicitud propia">
+                                    <button class="btn btn-outline-secondary" type="button" id="buscarEmpleado">Buscar</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nombre_empleado" class="form-label">Nombre del Empleado</label>
+                                <input type="text" class="form-control" id="nombre_empleado" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="puesto_empleado" class="form-label">Puesto</label>
+                                <input type="text" class="form-control" id="puesto_empleado" readonly>
+                            </div>
+                            <?php endif; ?>
+                            
                             <div class="mb-3">
                                 <label for="tipo_pase" class="form-label">Tipo de Pase</label>
                                 <select class="form-select" id="tipo_pase" name="tipo_pase" required onchange="mostrarCamposHora()">
@@ -151,6 +209,11 @@ if ($result->num_rows > 0) {
                             <div class="mb-3">
                                 <label for="fecha_pase" class="form-label">Fecha del Pase</label>
                                 <input type="date" class="form-control" id="fecha_pase" name="fecha_pase" required>
+                            </div>
+                            
+                            <div class="mb-3" id="div_hora_entrada" style="display: none;">
+                                <label for="hora_entrada" class="form-label">Hora de Entrada</label>
+                                <input type="time" class="form-control" id="hora_entrada" name="hora_entrada">
                             </div>
                             
                             <div class="mb-3" id="div_hora_salida" style="display: none;">
@@ -177,7 +240,7 @@ if ($result->num_rows > 0) {
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0">Mis Solicitudes de Pases</h5>
+                        <h5 class="mb-0">Solicitudes de Pases</h5>
                     </div>
                     <div class="card-body">
                         <?php if (empty($pases)): ?>
@@ -188,6 +251,10 @@ if ($result->num_rows > 0) {
                                 <thead>
                                     <tr>
                                         <th>ID</th>
+                                        <?php if ($tipo_usuario == 'supervisor'): ?>
+                                        <th>Empleado</th>
+                                        <th>Ficha</th>
+                                        <?php endif; ?>
                                         <th>Tipo</th>
                                         <th>Fecha</th>
                                         <th>Hora Salida</th>
@@ -200,6 +267,10 @@ if ($result->num_rows > 0) {
                                     <?php foreach ($pases as $pase): ?>
                                     <tr>
                                         <td><?php echo $pase['id']; ?></td>
+                                        <?php if ($tipo_usuario == 'supervisor'): ?>
+                                        <td><?php echo $pase['nombre']; ?></td>
+                                        <td><?php echo $pase['num_ficha']; ?></td>
+                                        <?php endif; ?>
                                         <td>
                                             <?php 
                                             switch ($pase['tipo_pase']) {
@@ -264,6 +335,9 @@ if ($result->num_rows > 0) {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <p><strong>Empleado:</strong> <?php echo $pase['nombre']; ?></p>
+                    <p><strong>Puesto:</strong> <?php echo $pase['puesto']; ?></p>
+                    <p><strong>Número de Ficha:</strong> <?php echo $pase['num_ficha']; ?></p>
                     <p><strong>Tipo de Pase:</strong> 
                         <?php 
                         switch ($pase['tipo_pase']) {
@@ -286,7 +360,7 @@ if ($result->num_rows > 0) {
                     <?php endif; ?>
                     
                     <?php if ($pase['hora_regreso']): ?>
-                    <p><strong>Hora de Regreso:</strong> <?php echo date('H:i', strtotime($pase['hora_regreso'])); ?></p>
+                    <p><strong>Hora de Regreso/Entrada:</strong> <?php echo date('H:i', strtotime($pase['hora_regreso'])); ?></p>
                     <?php endif; ?>
                     
                     <p><strong>Motivo:</strong> <?php echo $pase['motivo']; ?></p>
@@ -331,21 +405,25 @@ if ($result->num_rows > 0) {
             const tipoPase = document.getElementById('tipo_pase').value;
             const divHoraSalida = document.getElementById('div_hora_salida');
             const divHoraRegreso = document.getElementById('div_hora_regreso');
+            const divHoraEntrada = document.getElementById('div_hora_entrada');
             const inputHoraSalida = document.getElementById('hora_salida');
             const inputHoraRegreso = document.getElementById('hora_regreso');
+            const inputHoraEntrada = document.getElementById('hora_entrada');
             
             // Restablecer required
             inputHoraSalida.required = false;
             inputHoraRegreso.required = false;
+            inputHoraEntrada.required = false;
             
-            // Ocultar ambos por defecto
+            // Ocultar todos por defecto
             divHoraSalida.style.display = 'none';
             divHoraRegreso.style.display = 'none';
+            divHoraEntrada.style.display = 'none';
             
             // Mostrar según el tipo de pase
             if (tipoPase === 'entrada') {
-                divHoraRegreso.style.display = 'block';
-                inputHoraRegreso.required = true;
+                divHoraEntrada.style.display = 'block';
+                inputHoraEntrada.required = true;
             } else if (tipoPase === 'salida') {
                 divHoraSalida.style.display = 'block';
                 inputHoraSalida.required = true;
@@ -358,7 +436,60 @@ if ($result->num_rows > 0) {
         }
         
         // Inicializar al cargar la página
-        document.addEventListener('DOMContentLoaded', mostrarCamposHora);
+        document.addEventListener('DOMContentLoaded', function() {
+            mostrarCamposHora();
+            
+            <?php if ($tipo_usuario == 'supervisor'): ?>
+            // Función para buscar información del empleado por número de ficha
+            document.getElementById('buscarEmpleado').addEventListener('click', function() {
+                buscarEmpleadoPorFicha();
+            });
+            
+            document.getElementById('num_ficha_empleado').addEventListener('blur', function() {
+                if (this.value.trim() !== '') {
+                    buscarEmpleadoPorFicha();
+                }
+            });
+            
+            function buscarEmpleadoPorFicha() {
+                const numFicha = document.getElementById('num_ficha_empleado').value.trim();
+                
+                if (numFicha === '') {
+                    document.getElementById('nombre_empleado').value = '';
+                    document.getElementById('puesto_empleado').value = '';
+                    return;
+                }
+                
+                // Realizar la solicitud AJAX
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', 'buscar_empleado.php?num_ficha=' + encodeURIComponent(numFicha), true);
+                
+                xhr.onload = function() {
+                    if (this.status === 200) {
+                        try {
+                            const response = JSON.parse(this.responseText);
+                            if (response.success) {
+                                document.getElementById('nombre_empleado').value = response.nombre || '';
+                                document.getElementById('puesto_empleado').value = response.puesto || '';
+                            } else {
+                                document.getElementById('nombre_empleado').value = '';
+                                document.getElementById('puesto_empleado').value = '';
+                                alert('Empleado no encontrado.');
+                            }
+                        } catch (e) {
+                            console.error('Error al procesar la respuesta:', e);
+                        }
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    console.error('Error de conexión');
+                };
+                
+                xhr.send();
+            }
+            <?php endif; ?>
+        });
     </script>
 </body>
 </html>
